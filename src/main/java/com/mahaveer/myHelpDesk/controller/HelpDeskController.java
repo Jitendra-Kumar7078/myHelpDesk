@@ -1,6 +1,7 @@
 package com.mahaveer.myHelpDesk.controller;
 
 
+import com.mahaveer.myHelpDesk.dto.ChatMessageDto;
 import com.mahaveer.myHelpDesk.dto.TicketRequestDto;
 import com.mahaveer.myHelpDesk.model.Ticket;
 import com.mahaveer.myHelpDesk.service.TicketService;
@@ -24,4 +25,16 @@ public class HelpDeskController {
     public Ticket askQuestion(@RequestBody TicketRequestDto dto){
         return ticketService.createTicket(dto);
     }
+
+    @PostMapping("/chat")
+    public String chat(@RequestBody ChatMessageDto dto) {
+        return ticketService.addMessageToTicket(dto);
+    }
+
+    @PostMapping("/chat/context")
+    public String chatWithContext(@RequestBody ChatMessageDto dto) {
+        return ticketService.addMessageWithContext(dto);
+    }
+
+
 }

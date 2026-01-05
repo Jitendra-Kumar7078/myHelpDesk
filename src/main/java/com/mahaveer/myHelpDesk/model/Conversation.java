@@ -17,7 +17,7 @@ public class Conversation {
 
     private Long ticketId;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "LONGTEXT")
     private String message;
     private String sender;
 

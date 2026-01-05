@@ -1,5 +1,6 @@
 package com.mahaveer.myHelpDesk.service.impl;
 
+import com.mahaveer.myHelpDesk.dto.ChatMessageDto;
 import com.mahaveer.myHelpDesk.dto.TicketRequestDto;
 import com.mahaveer.myHelpDesk.model.Conversation;
 import com.mahaveer.myHelpDesk.model.Ticket;
@@ -8,9 +9,11 @@ import com.mahaveer.myHelpDesk.repository.TicketRepository;
 import com.mahaveer.myHelpDesk.service.GeminiService;
 import com.mahaveer.myHelpDesk.service.TicketService;
 import com.mahaveer.myHelpDesk.util.CategoryPriorityUtil;
+import com.mahaveer.myHelpDesk.util.PromptUtil;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class TicketServiceImpl implements TicketService {
@@ -70,4 +73,64 @@ public class TicketServiceImpl implements TicketService {
 
         return savedTicket;
     }
+
+    @Override
+    public String addMessageToTicket(ChatMessageDto dto) {
+
+        // 1️⃣ Save USER message
+        Conversation userConversation = new Conversation();
+        userConversation.setTicketId(dto.getTicketId());
+        userConversation.setMessage(dto.getMessage());
+        userConversation.setSender("USER");
+        userConversation.setCreatedAt(LocalDateTime.now());
+
+        conversationRepository.save(userConversation);
+
+        // 2️⃣ Call AI
+        String aiResponse = geminiService.getAIResponse(dto.getMessage());
+
+        // 3️⃣ Save AI response
+        Conversation aiConversation = new Conversation();
+        aiConversation.setTicketId(dto.getTicketId());
+        aiConversation.setMessage(aiResponse);
+        aiConversation.setSender("AI");
+        aiConversation.setCreatedAt(LocalDateTime.now());
+
+        conversationRepository.save(aiConversation);
+
+        return aiResponse;
+    }
+
+    @Override
+    public String addMessageWithContext(ChatMessageDto dto) {
+
+        // 1️⃣ Fetch previous conversation
+        List<Conversation> history =
+                conversationRepository.findByTicketIdOrderByCreatedAtAsc(dto.getTicketId());
+
+        // 2️⃣ Build prompt with full context
+        String prompt = PromptUtil.buildPrompt(history, dto.getMessage());
+
+        // 3️⃣ Save USER message
+        Conversation userConversation = new Conversation();
+        userConversation.setTicketId(dto.getTicketId());
+        userConversation.setMessage(dto.getMessage());
+        userConversation.setSender("USER");
+        userConversation.setCreatedAt(LocalDateTime.now());
+        conversationRepository.save(userConversation);
+
+        // 4️⃣ Call AI with context-aware prompt
+        String aiResponse = geminiService.getAIResponse(prompt);
+
+        // 5️⃣ Save AI response
+        Conversation aiConversation = new Conversation();
+        aiConversation.setTicketId(dto.getTicketId());
+        aiConversation.setMessage(aiResponse);
+        aiConversation.setSender("AI");
+        aiConversation.setCreatedAt(LocalDateTime.now());
+        conversationRepository.save(aiConversation);
+
+        return aiResponse;
+    }
+
 }

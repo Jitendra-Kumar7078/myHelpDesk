@@ -19,5 +19,5 @@ spring:
     google:
       genai:
         api-key: ${GOOGLE_KEY}
-        project-id: ${GOOGLE_PROJECT_ID}
-        location: us-central1
+#        project-id: ${GOOGLE_PROJECT_ID}
+#        location: us-central1
